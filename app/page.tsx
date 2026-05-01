@@ -1,110 +1,227 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+type Client = {
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  score: string;
+};
 
 export default function Dashboard() {
-  const [clients, setClients] = useState<any[]>([]);
-  const [name, setName] = useState("");
+  const [clients, setClients] = useState<Client[]>([]);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    status: "Active",
+    score: "",
+  });
 
-  // Load from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("clients");
-    if (saved) setClients(JSON.parse(saved));
+    const savedClients = localStorage.getItem("clients");
+    if (savedClients) {
+      setClients(JSON.parse(savedClients));
+    }
   }, []);
 
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem("clients", JSON.stringify(clients));
   }, [clients]);
 
   const addClient = () => {
-    if (!name) return;
-    setClients([...clients, { name }]);
-    setName("");
+    if (!form.name.trim()) return;
+
+    setClients([...clients, form]);
+
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      status: "Active",
+      score: "",
+    });
   };
 
   const deleteClient = (index: number) => {
-    const updated = clients.filter((_, i) => i !== index);
-    setClients(updated);
+    setClients(clients.filter((_, i) => i !== index));
   };
 
+  const averageScore =
+    clients.length > 0
+      ? Math.round(
+          clients.reduce((sum, client) => sum + Number(client.score || 0), 0) /
+            clients.length
+        )
+      : "--";
+
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-slate-100 text-slate-900">
+      <div className="flex">
+        <aside className="min-h-screen w-72 bg-slate-950 p-6 text-white">
+          <h1 className="mb-2 text-3xl font-bold">CreditEdge</h1>
+          <p className="mb-10 text-sm text-slate-400">
+            AI-powered credit management
+          </p>
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-black text-white p-5">
-        <h1 className="text-2xl font-bold mb-10">CreditEdge</h1>
-        <nav className="space-y-4">
-          <p>Dashboard</p>
-          <p>Clients</p>
-          <p>Analytics</p>
-          <p>Settings</p>
-        </nav>
-      </aside>
+          <nav className="space-y-3">
+            {["Dashboard", "Clients", "Analytics", "Reports", "Settings"].map(
+              (item) => (
+                <div
+                  key={item}
+                  className="rounded-xl px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white"
+                >
+                  {item}
+                </div>
+              )
+            )}
+          </nav>
+        </aside>
 
-      {/* Main */}
-      <main className="flex-1 p-10">
-        <h2 className="text-3xl font-bold mb-6">Dashboard</h2>
+        <main className="flex-1 p-8">
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="text-4xl font-bold">Dashboard</h2>
+              <p className="text-slate-500">
+                Manage clients, credit progress, and dispute workflows.
+              </p>
+            </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-6 mb-10">
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h3>Total Clients</h3>
-            <p className="text-2xl font-bold">{clients.length}</p>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h3>Active Disputes</h3>
-            <p className="text-2xl font-bold">0</p>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h3>Avg Credit Score</h3>
-            <p className="text-2xl font-bold">--</p>
-          </div>
-        </div>
-
-        {/* Clients */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="text-xl font-bold mb-4">Clients</h3>
-
-          {/* Input */}
-          <div className="flex gap-2 mb-4">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter client name"
-              className="border p-2 rounded w-full"
-            />
-            <button
-              onClick={addClient}
-              className="bg-black text-white px-4 py-2 rounded"
-            >
-              Add
+            <button className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white shadow">
+              Export Report
             </button>
           </div>
 
-          {/* List */}
-          {clients.length === 0 ? (
-            <p className="text-gray-500">No clients yet</p>
-          ) : (
-            <ul className="space-y-2">
-              {clients.map((client, index) => (
-                <li
-                  key={index}
-                  className="flex justify-between bg-gray-100 p-3 rounded"
+          <div className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div className="rounded-2xl bg-white p-6 shadow">
+              <p className="text-sm text-slate-500">Total Clients</p>
+              <h3 className="mt-2 text-3xl font-bold">{clients.length}</h3>
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 shadow">
+              <p className="text-sm text-slate-500">Active Cases</p>
+              <h3 className="mt-2 text-3xl font-bold">
+                {clients.filter((client) => client.status === "Active").length}
+              </h3>
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 shadow">
+              <p className="text-sm text-slate-500">Average Credit Score</p>
+              <h3 className="mt-2 text-3xl font-bold">{averageScore}</h3>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <section className="rounded-2xl bg-white p-6 shadow">
+              <h3 className="mb-4 text-xl font-bold">Add Client</h3>
+
+              <div className="space-y-3">
+                <input
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Client name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+
+                <input
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+
+                <input
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Phone"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+
+                <input
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Credit score"
+                  value={form.score}
+                  onChange={(e) => setForm({ ...form, score: e.target.value })}
+                />
+
+                <select
+                  className="w-full rounded-xl border p-3"
+                  value={form.status}
+                  onChange={(e) =>
+                    setForm({ ...form, status: e.target.value })
+                  }
                 >
-                  <span>{client.name}</span>
-                  <button
-                    onClick={() => deleteClient(index)}
-                    className="text-red-500"
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </main>
+                  <option>Active</option>
+                  <option>Pending</option>
+                  <option>Completed</option>
+                </select>
+
+                <button
+                  onClick={addClient}
+                  className="w-full rounded-xl bg-slate-950 p-3 font-semibold text-white"
+                >
+                  Add Client
+                </button>
+              </div>
+            </section>
+
+            <section className="rounded-2xl bg-white p-6 shadow lg:col-span-2">
+              <h3 className="mb-4 text-xl font-bold">Client Profiles</h3>
+
+              {clients.length === 0 ? (
+                <p className="text-slate-500">No clients added yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {clients.map((client, index) => (
+                    <div
+                      key={index}
+                      className="rounded-2xl border bg-slate-50 p-5"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-lg font-bold">{client.name}</h4>
+                          <p className="text-sm text-slate-500">
+                            {client.email || "No email"} |{" "}
+                            {client.phone || "No phone"}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => deleteClient(index)}
+                          className="rounded-lg bg-red-100 px-3 py-2 text-sm font-semibold text-red-600"
+                        >
+                          Delete
+                        </button>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-3 gap-3">
+                        <div className="rounded-xl bg-white p-3">
+                          <p className="text-xs text-slate-500">Status</p>
+                          <p className="font-semibold">{client.status}</p>
+                        </div>
+
+                        <div className="rounded-xl bg-white p-3">
+                          <p className="text-xs text-slate-500">Credit Score</p>
+                          <p className="font-semibold">
+                            {client.score || "Not added"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl bg-white p-3">
+                          <p className="text-xs text-slate-500">Disputes</p>
+                          <p className="font-semibold">0 Active</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
